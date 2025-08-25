@@ -1,7 +1,7 @@
 # ProjMusicBot
 
 ## But du projet
-Le Projet serait de créer un bot discord qui permetterais de faire des playlists, jouer des musiques ou des playlists dans des channels vocaux. 
+Le Projet serait de créer un bot discord en Javascript qui permetterais de faire des playlists, jouer des musiques ou des playlists dans des channels vocaux. 
 
 ## Les fonctionnalités 
 

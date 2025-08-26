@@ -2,8 +2,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags } = require('discord.js');
-const { token } = require('../config.json');
-const { clientId, clientSecret } = require('../spotifyConfig.json');
+const { token } = require('../config/config.json');
+const { clientId, clientSecret } = require('../config/spotifyConfig.json');
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });

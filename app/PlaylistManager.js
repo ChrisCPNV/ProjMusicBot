@@ -85,7 +85,7 @@ class PlaylistManager {
 
   listMoods() {
     // Tu peux personnaliser cette liste à ta guise
-    return ["chill", "focus", "sport", "party", "study", "happy", "sad"];
+    return ["chill", "focus", "sport", "party", "study", "happy", "sad", "weird"];
   }
 }
 

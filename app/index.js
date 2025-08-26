@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags } = require('discord.js');
-const { token, spotify } = require('../config/config.json');
+const { discord, spotify } = require('../config/config.json');
 const PlaylistManager = require('./playlistManager');
 
 // Create a new client instance
@@ -56,4 +56,4 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 // Log in to Discord with your client's token
-client.login(token);
+client.login(discord.token);

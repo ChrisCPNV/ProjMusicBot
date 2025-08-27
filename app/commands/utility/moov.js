@@ -56,7 +56,7 @@ module.exports = {
                 channelId: channel.id,
                 guildId: channel.guild.id,
                 adapterCreator: channel.guild.voiceAdapterCreator,
-                selfDeaf: false, // Le bot ne sera pas sourd
+                selfDeaf: true, // Le bot sera sourd
                 selfMute: false  // Le bot ne sera pas muet
             });
 

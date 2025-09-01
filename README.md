@@ -14,3 +14,8 @@ Le Projet serait de créer un bot discord en Javascript qui permetterais de fair
 
 * Chris Brandt
 * Deyan Tucev
+
+## Dépendences
+
+* discord.js: v14.22.1,
+* spotify-api.js: v9.2.5

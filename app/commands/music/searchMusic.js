@@ -1,38 +1,74 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('musique')
-    .setDescription('Cherche une musique Spotify par titre')
+    .setDescription('Cherche une musique Spotify')
     .addStringOption(option =>
       option.setName('titre')
-        .setDescription('Titre ou mot-clé de la musique recherchée')
+        .setDescription('Titre de la musique recherchée')
         .setRequired(true)
     ),
 
   async execute(interaction) {
-    const titre = interaction.options.getString('titre');
+    const query = interaction.options.getString('titre');
+    const tracks = await interaction.client.musicManager.searchTracks(query, 5);
 
-    try {
-      // Appel à MusicManager
-      const track = await interaction.client.musicManager.searchTrack(titre);
+    if (!tracks || tracks.length === 0) {
+      return interaction.reply(`Aucun résultat trouvé pour **${query}**`);
+    }
 
-      if (!track) {
-        return interaction.reply(`Aucun résultat trouvé pour **${titre}**`);
-      }
+    let index = 0;
 
-      // Embed Discord
-      const embed = new EmbedBuilder()
+    const generateEmbed = (i) => {
+      const track = tracks[i];
+      return new EmbedBuilder()
         .setTitle(track.title)
         .setURL(track.url)
-        .setDescription(`**Artiste(s):** ${track.artist}`)
-        .setColor(0x1DB954); // Vert Spotify
-      if (track.image) embed.setThumbnail(track.image);
+        .setDescription(`**${track.artist}**\nRésultat ${i + 1} sur ${tracks.length}`)
+        .setThumbnail(track.image)
+        .setColor(0x1DB954); // Spotify green
+    };
 
-      await interaction.reply({ embeds: [embed] });
-    } catch (error) {
-      console.error(error);
-      await interaction.reply(`Erreur lors de la recherche de **${titre}**`);
-    }
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('prev')
+        .setLabel('⬅️')
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId('next')
+        .setLabel('➡️')
+        .setStyle(ButtonStyle.Secondary),
+    );
+
+    await interaction.reply({
+      embeds: [generateEmbed(index)],
+      components: [row],
+    });
+
+    const collector = interaction.channel.createMessageComponentCollector({
+      time: 60_000, // 1 min
+    });
+
+    collector.on('collect', async (i) => {
+      if (i.user.id !== interaction.user.id) {
+        return i.reply({ content: "Ce n’est pas ton interaction.", ephemeral: true });
+      }
+
+      if (i.customId === 'prev') {
+        index = (index - 1 + tracks.length) % tracks.length;
+      } else if (i.customId === 'next') {
+        index = (index + 1) % tracks.length;
+      }
+
+      await i.update({
+        embeds: [generateEmbed(index)],
+        components: [row],
+      });
+    });
+
+    collector.on('end', async () => {
+      await interaction.editReply({ components: [] }); // disable buttons
+    });
   },
 };

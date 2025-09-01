@@ -48,29 +48,38 @@ class MusicManager {
     return this.token;
   }
 
-  async searchTrack(query) {
-    const token = await this.getValidToken();
+async searchTracks(query, limit = 5) {
+  const token = await this.getValidToken();
 
-    const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-      query
-    )}&type=track&limit=1`;
+  // First try exact title search
+  let url = `https://api.spotify.com/v1/search?q=track:${encodeURIComponent(query)}&type=track&limit=${limit}`;
+  let response = await axios.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
-    const response = await axios.get(url, {
-      headers: { Authorization: "Bearer " + token },
+  let items = response.data.tracks.items;
+
+  // If no results, fallback to broad search
+  if (items.length === 0) {
+    url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`;
+    response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
     });
-
-    if (response.data.tracks.items.length > 0) {
-      const track = response.data.tracks.items[0];
-      return new Music(
-        track.name,
-        track.external_urls.spotify,
-        track.artists.map((a) => a.name).join(", "),
-        track.album.images[0]?.url || null
-      );
-    }
-
-    return null;
+    items = response.data.tracks.items;
   }
+
+  if (items.length > 0) {
+    return items.map(track => ({
+      title: track.name,
+      url: track.external_urls.spotify,
+      artist: track.artists.map(a => a.name).join(', '),
+      image: track.album.images[0]?.url || null,
+    }));
+  }
+
+  return [];
+}
+
 }
 
 module.exports = MusicManager;

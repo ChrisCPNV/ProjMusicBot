@@ -1,74 +1,113 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const {
+  joinVoiceChannel,
+  createAudioPlayer,
+  createAudioResource,
+  AudioPlayerStatus,
+} = require('@discordjs/voice');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('musique')
-    .setDescription('Cherche une musique Spotify')
+    .setName('music')
+    .setDescription('Search for a song on Spotify and play its preview')
     .addStringOption(option =>
-      option.setName('titre')
-        .setDescription('Titre de la musique recherchée')
+      option.setName('query')
+        .setDescription('Song title or artist')
         .setRequired(true)
     ),
 
   async execute(interaction) {
-    const query = interaction.options.getString('titre');
+    const query = interaction.options.getString('query');
     const tracks = await interaction.client.musicManager.searchTracks(query, 5);
 
     if (!tracks || tracks.length === 0) {
-      return interaction.reply(`Aucun résultat trouvé pour **${query}**`);
+      return interaction.reply(`❌ No tracks found for **${query}**`);
     }
 
+    // Track navigation
     let index = 0;
 
-    const generateEmbed = (i) => {
-      const track = tracks[i];
-      return new EmbedBuilder()
-        .setTitle(track.title)
-        .setURL(track.url)
-        .setDescription(`**${track.artist}**\nRésultat ${i + 1} sur ${tracks.length}`)
-        .setThumbnail(track.image)
-        .setColor(0x1DB954); // Spotify green
+    const embed = (i) => {
+      const t = tracks[i];
+      const e = new EmbedBuilder()
+        .setTitle(t.title)
+        .setURL(t.url)
+        .setDescription(`By **${t.artist}**`)
+        .setColor(0x1DB954);
+      if (t.image) e.setThumbnail(t.image);
+      return e;
     };
 
-    const row = new ActionRowBuilder().addComponents(
+    const row = (i) => new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('prev')
         .setLabel('⬅️')
-        .setStyle(ButtonStyle.Secondary),
+        .setStyle(ButtonStyle.Primary)
+        .setDisabled(i === 0),
       new ButtonBuilder()
         .setCustomId('next')
         .setLabel('➡️')
-        .setStyle(ButtonStyle.Secondary),
+        .setStyle(ButtonStyle.Primary)
+        .setDisabled(i === tracks.length - 1),
+      new ButtonBuilder()
+        .setCustomId('play')
+        .setLabel('▶️ Play Preview')
+        .setStyle(ButtonStyle.Success)
     );
 
-    await interaction.reply({
-      embeds: [generateEmbed(index)],
-      components: [row],
-    });
+    const message = await interaction.reply({ embeds: [embed(index)], components: [row(index)], fetchReply: true });
 
-    const collector = interaction.channel.createMessageComponentCollector({
-      time: 60_000, // 1 min
-    });
+    const collector = message.createMessageComponentCollector({ time: 60000 });
 
-    collector.on('collect', async (i) => {
+    collector.on('collect', async i => {
       if (i.user.id !== interaction.user.id) {
-        return i.reply({ content: "Ce n’est pas ton interaction.", ephemeral: true });
+        return i.reply({ content: "❌ You can't use these buttons.", ephemeral: true });
       }
 
       if (i.customId === 'prev') {
-        index = (index - 1 + tracks.length) % tracks.length;
-      } else if (i.customId === 'next') {
-        index = (index + 1) % tracks.length;
+        index--;
+        await i.update({ embeds: [embed(index)], components: [row(index)] });
       }
 
-      await i.update({
-        embeds: [generateEmbed(index)],
-        components: [row],
-      });
+      if (i.customId === 'next') {
+        index++;
+        await i.update({ embeds: [embed(index)], components: [row(index)] });
+      }
+
+      if (i.customId === 'play') {
+        const track = tracks[index];
+
+        // Voice channel check
+        const voiceChannel = interaction.member.voice.channel;
+        if (!voiceChannel) {
+          return i.reply({ content: '⚠️ Join a voice channel to play the preview!', ephemeral: true });
+        }
+
+        if (!track.preview_url) {
+          return i.reply({ content: '⚠️ No preview available for this track!', ephemeral: true });
+        }
+
+        const connection = joinVoiceChannel({
+          channelId: voiceChannel.id,
+          guildId: interaction.guild.id,
+          adapterCreator: interaction.guild.voiceAdapterCreator,
+        });
+
+        const player = createAudioPlayer();
+        const resource = createAudioResource(track.preview_url);
+
+        player.play(resource);
+        connection.subscribe(player);
+
+        player.on(AudioPlayerStatus.Idle, () => connection.destroy());
+
+        await i.update({ content: `▶️ Playing preview of **${track.title}**`, embeds: [], components: [] });
+        collector.stop();
+      }
     });
 
-    collector.on('end', async () => {
-      await interaction.editReply({ components: [] }); // disable buttons
+    collector.on('end', () => {
+      message.edit({ components: [] }).catch(() => {});
     });
   },
 };

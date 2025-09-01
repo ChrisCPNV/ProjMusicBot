@@ -1,14 +1,5 @@
 const axios = require("axios");
 
-class Music {
-  constructor(title, url, artist, image = null) {
-    this.title = title;
-    this.url = url;
-    this.artist = artist;
-    this.image = image;
-  }
-}
-
 async function getAccessToken(clientId, clientSecret) {
   const tokenUrl = "https://accounts.spotify.com/api/token";
 
@@ -74,6 +65,7 @@ async searchTracks(query, limit = 5) {
       url: track.external_urls.spotify,
       artist: track.artists.map(a => a.name).join(', '),
       image: track.album.images[0]?.url || null,
+      preview_url: track.preview_url || null, // <-- add this line
     }));
   }
 

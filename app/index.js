@@ -2,11 +2,15 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags } = require('discord.js');
-const { token } = require('../config/config.json');
-const { clientId, clientSecret } = require('../config/spotifyConfig.json');
+const { discord, spotify } = require('../config/config.json');
+const PlaylistManager = require('./playlistManager');
+const MusicManager = require('./MusicManager');
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+client.playlistManager = new PlaylistManager(spotify.clientId, spotify.clientSecret);
+client.musicManager = new MusicManager(spotify.clientId, spotify.clientSecret);
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
@@ -54,4 +58,4 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 // Log in to Discord with your client's token
-client.login(token);
+client.login(discord.token);

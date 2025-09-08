@@ -4,11 +4,13 @@ const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags } = require('discord.js');
 const { discord, spotify } = require('../config/config.json');
 const PlaylistManager = require('./playlistManager');
+const MusicManager = require('./MusicManager');
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.playlistManager = new PlaylistManager(spotify.clientId, spotify.clientSecret);
+client.musicManager = new MusicManager(spotify.clientId, spotify.clientSecret);
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');

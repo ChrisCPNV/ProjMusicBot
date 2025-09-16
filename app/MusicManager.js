@@ -39,39 +39,56 @@ class MusicManager {
     return this.token;
   }
 
-async searchTracks(query, limit = 5) {
-  const token = await this.getValidToken();
+  async searchTracks(query, limit = 5) {
+    const token = await this.getValidToken();
 
-  // First try exact title search
-  let url = `https://api.spotify.com/v1/search?q=track:${encodeURIComponent(query)}&type=track&limit=${limit}`;
-  let response = await axios.get(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  let items = response.data.tracks.items;
-
-  // If no results, fallback to broad search
-  if (items.length === 0) {
-    url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`;
-    response = await axios.get(url, {
+    // First try exact title search
+    let url = `https://api.spotify.com/v1/search?q=track:${encodeURIComponent(query)}&type=track&limit=${limit}`;
+    let response = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    items = response.data.tracks.items;
+
+    let items = response.data.tracks.items;
+
+    // If no results, fallback to broad search
+    if (items.length === 0) {
+      url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`;
+      response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      items = response.data.tracks.items;
+    }
+
+    if (items.length > 0) {
+      return items.map(track => ({
+        title: track.name,
+        url: track.external_urls.spotify,
+        artist: track.artists.map(a => a.name).join(', '),
+        image: track.album.images[0]?.url || null,
+        preview_url: track.preview_url || null,
+      }));
+    }
+
+    return [];
   }
 
-  if (items.length > 0) {
-    return items.map(track => ({
-      title: track.name,
-      url: track.external_urls.spotify,
-      artist: track.artists.map(a => a.name).join(', '),
-      image: track.album.images[0]?.url || null,
-      preview_url: track.preview_url || null, // <-- add this line
-    }));
+  // ✅ Now inside the class
+  async getArtistGenres(artistName) {
+    const token = await this.getValidToken();
+    const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`;
+    
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const artist = response.data.artists.items[0];
+    if (!artist) return null;
+
+    return {
+      name: artist.name,
+      genres: artist.genres,
+    };
   }
-
-  return [];
-}
-
 }
 
 module.exports = MusicManager;

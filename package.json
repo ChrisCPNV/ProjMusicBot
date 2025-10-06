@@ -1,7 +1,7 @@
 {
   "name": "spotybot",
   "version": "1.0.0",
-  "description": "Le Projet serait de créer un bot discord en Javascript qui permetterais de faire des playlists, jouer des musiques ou des playlists dans des channels vocaux.",
+  "description": "Bot Discord en JavaScript permettant de gérer des playlists et jouer de la musique via Lavalink.",
   "homepage": "https://github.com/ChrisCPNV/ProjMusicBot#readme",
   "bugs": {
     "url": "https://github.com/ChrisCPNV/ProjMusicBot/issues"
@@ -15,14 +15,18 @@
   "type": "commonjs",
   "main": "app/index.js",
   "scripts": {
+    "start": "node app/index.js",
+    "deploy-commands": "node app/deploy-commands.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "@discordjs/builders": "^1.11.3",
     "@discordjs/voice": "^0.19.0",
+    "@snazzah/davey": "^0.1.7",
+    "axios": "^1.7.9",
     "discord.js": "^14.22.1",
-    "play-dl": "^1.9.7",
-    "spotify-api.js": "^9.2.5"
+    "erela.js": "github:Tomato6966/erela.js",
+    "erela.js-spotify": "^1.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",

@@ -10,7 +10,8 @@ async function getAccessToken(clientId, clientSecret) {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         "Authorization":
-          "Basic " + Buffer.from(clientId + ":" + clientSecret).toString("base64"),
+          "Basic " +
+          Buffer.from(clientId + ":" + clientSecret).toString("base64"),
       },
     }
   );
@@ -43,7 +44,9 @@ class MusicManager {
     const token = await this.getValidToken();
 
     // First try exact title search
-    let url = `https://api.spotify.com/v1/search?q=track:${encodeURIComponent(query)}&type=track&limit=${limit}`;
+    let url = `https://api.spotify.com/v1/search?q=track:${encodeURIComponent(
+      query
+    )}&type=track&limit=${limit}`;
     let response = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -52,7 +55,9 @@ class MusicManager {
 
     // If no results, fallback to broad search
     if (items.length === 0) {
-      url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`;
+      url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+        query
+      )}&type=track&limit=${limit}`;
       response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -60,10 +65,10 @@ class MusicManager {
     }
 
     if (items.length > 0) {
-      return items.map(track => ({
+      return items.map((track) => ({
         title: track.name,
         url: track.external_urls.spotify,
-        artist: track.artists.map(a => a.name).join(', '),
+        artist: track.artists.map((a) => a.name).join(", "),
         image: track.album.images[0]?.url || null,
         preview_url: track.preview_url || null,
       }));
@@ -72,11 +77,12 @@ class MusicManager {
     return [];
   }
 
-  // ✅ Now inside the class
   async getArtistGenres(artistName) {
     const token = await this.getValidToken();
-    const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`;
-    
+    const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+      artistName
+    )}&type=artist&limit=1`;
+
     const response = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -87,6 +93,46 @@ class MusicManager {
     return {
       name: artist.name,
       genres: artist.genres,
+    };
+  }
+
+  // ✅ Get available genre seeds from Spotify
+  async getAvailableGenres() {
+    const token = await this.getValidToken();
+    const url = `https://api.spotify.com/v1/recommendations/available-genre-seeds`;
+
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return response.data.genres || [];
+  }
+
+  // ✅ Get a random artist by picking a random genre and searching Spotify
+  async getRandomArtist() {
+    const token = await this.getValidToken();
+    const genres = await this.getAvailableGenres();
+
+    if (!genres.length) return null;
+
+    const randomGenre = genres[Math.floor(Math.random() * genres.length)];
+    const url = `https://api.spotify.com/v1/search?q=genre:"${encodeURIComponent(
+      randomGenre
+    )}"&type=artist&limit=10`;
+
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const items = response.data.artists.items;
+    if (!items.length) return null;
+
+    // Pick a random artist from the results
+    const randomArtist = items[Math.floor(Math.random() * items.length)];
+
+    return {
+      name: randomArtist.name,
+      genres: randomArtist.genres,
     };
   }
 }

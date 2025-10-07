@@ -97,44 +97,54 @@ class MusicManager {
   }
 
   // ✅ Get available genre seeds from Spotify
-  async getAvailableGenres() {
-    const token = await this.getValidToken();
-    const url = `https://api.spotify.com/v1/recommendations/available-genre-seeds`;
+  async getAvailableGenres(limit = 50) {
+  const token = await this.getValidToken();
 
-    const response = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  // Random letter search
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  const randomLetter = letters[Math.floor(Math.random() * letters.length)];
 
-    return response.data.genres || [];
-  }
+  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(randomLetter)}&type=artist&limit=${limit}`;
+  const response = await axios.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  // Collect genres from all artists returned
+  const genres = new Set();
+  response.data.artists.items.forEach(artist => {
+    if (artist.genres && artist.genres.length) {
+      artist.genres.forEach(g => genres.add(g));
+    }
+  });
+
+  return Array.from(genres);
+}
 
   // ✅ Get a random artist by picking a random genre and searching Spotify
   async getRandomArtist() {
-    const token = await this.getValidToken();
-    const genres = await this.getAvailableGenres();
+  const token = await this.getValidToken();
 
-    if (!genres.length) return null;
+  // Use a random letter to search artists
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  const randomLetter = letters[Math.floor(Math.random() * letters.length)];
 
-    const randomGenre = genres[Math.floor(Math.random() * genres.length)];
-    const url = `https://api.spotify.com/v1/search?q=genre:"${encodeURIComponent(
-      randomGenre
-    )}"&type=artist&limit=10`;
+  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(randomLetter)}&type=artist&limit=50`;
 
-    const response = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  const response = await axios.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
-    const items = response.data.artists.items;
-    if (!items.length) return null;
+  const artists = response.data.artists.items.filter(a => a.genres && a.genres.length > 0);
+  if (!artists.length) return null;
 
-    // Pick a random artist from the results
-    const randomArtist = items[Math.floor(Math.random() * items.length)];
+  // Pick a random artist
+  const randomArtist = artists[Math.floor(Math.random() * artists.length)];
 
-    return {
-      name: randomArtist.name,
-      genres: randomArtist.genres,
-    };
-  }
+  return {
+    name: randomArtist.name,
+    genres: randomArtist.genres,
+  };
+}
 }
 
 module.exports = MusicManager;

@@ -72,8 +72,9 @@ module.exports = {
       collector.stop();
     });
 
-    collector.on('end', async (_, reason) => {
-      if (reason !== 'messageDelete' && !message.deleted) {
+    collector.on('end', async (collected, reason) => {
+  // If nobody answered, show "time's up"
+      if (collected.size === 0 && reason !== 'messageDelete' && !message.deleted) {
         try {
           await message.edit({
             content: `⌛ Time's up! The correct genre was **${correctGenre}**.`,
@@ -83,5 +84,6 @@ module.exports = {
         } catch (_) {}
       }
     });
+
   },
 };

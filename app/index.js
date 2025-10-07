@@ -5,11 +5,24 @@ const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
 const { Manager } = require('erela.js'); // Fork compatible Lavalink v4
 const fs = require('fs');
 const path = require('path');
-
 // ==============================
 //      Config
 // ==============================
 const config = require('../config/config.json');
+
+// ==============================
+//      Client Discord
+// ==============================
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
+});
+
+
 
 // Managers
 client.playlistManager = new PlaylistManager(spotify.clientId, spotify.clientSecret);
@@ -45,17 +58,6 @@ client.once(Events.ClientReady, async readyClient => {
   } catch (err) {
     console.error("❌ Failed to initialize MusicManager:", err);
   }
-// ==============================
-//      Client Discord
-// ==============================
-const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
-    ]
-});
 
 // ==============================
 //      Erela.js Manager

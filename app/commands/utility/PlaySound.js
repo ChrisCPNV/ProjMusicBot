@@ -11,11 +11,10 @@ module.exports = {
         ),
     async execute(interaction, manager) {
         const url = interaction.options.getString('url');
-
         // Vérifie que l'utilisateur est dans un channel vocal
         const voiceChannel = interaction.member.voice.channel;
         if (!voiceChannel) {
-            return interaction.reply({ content: '❌ Tu dois être dans un salon vocal pour jouer de la musique.', ephemeral: true });
+            return interaction.reply({ content: '❌ Tu dois être dans un salon vocal pour jouer de le musique.', ephemeral: true });
         }
 
         // Vérifie le lien SoundCloud
@@ -23,13 +22,13 @@ module.exports = {
             return interaction.reply({ content: '⚠️ Seuls les liens SoundCloud sont supportés.', ephemeral: true });
         }
 
-        // Cherche le track sur le node disponible
+        // Cherche la track sur le node disponible
         let res;
         try {
             res = await manager.search(url, interaction.user);
         } catch (err) {
             console.error(err);
-            return interaction.reply({ content: '❌ Impossible de récupérer le track.', ephemeral: true });
+            return interaction.reply({ content: '❌ Impossible de récupérer la musique.', ephemeral: true });
         }
 
         if (!res || !res.tracks.length) {
